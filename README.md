@@ -7,3 +7,15 @@ Sofware de Auto Click feito na intenção de estudo e para fins de uso proprio q
 Ferramentas e bibliotecas.
 --------------------------------------------------------------------------------------------------------------------------
 
+-Linguagem de programação Python 
+-Biblioteca Flet
+-Pyautogui
+-time
+-Threading
+-pywinauto
+
+Como Usar:
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
