@@ -9,7 +9,6 @@ Ferramentas e bibliotecas.
 
 -Linguagem de programação Python 
 
-
 -Biblioteca Flet
 
 
