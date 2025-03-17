@@ -11,19 +11,13 @@ Ferramentas e bibliotecas.
 
 -Biblioteca Flet
 
-
 -Pyautogui
-
 
 -time
 
-
 -Threading
 
-
 -pywinauto
-
-
 
 Como Usar:
 -------------------------------------------------------------------------------------------------------------------------
