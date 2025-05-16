@@ -1,4 +1,4 @@
-from flet import Page, Text, Row, app, Column, Container, MainAxisAlignment, FilledButton, CrossAxisAlignment, Dropdown, dropdown
+from flet import Page, Text, Row, app, Column, Container, MainAxisAlignment, FilledButton, CrossAxisAlignment, Dropdown, dropdown,ResponsiveRow
 from pyautogui import position, click
 import time
 from threading import Thread
@@ -21,27 +21,7 @@ class Auto_Clicker:
         self._selected_window = None  # Janela selecionada pelo usuário
         self._dropdown_janelas = None  # Referência ao Dropdown para listar janelas
 
-    def _auto_click_ON(self, page):
-        """
-        Inicia o auto-clicker em uma thread separada.
-
-        Aumenta a prioridade da thread para que o auto-clicker seja executado
-        com mais prioridade.
-
-        Altera a cor do Container para verde pastel mai vibrante.
-
-        Obtém as coordenadas iniciais do mouse e define o intervalo entre os
-        cliques (em segundos).
-
-        Executa o loop do auto-clicker, que será interrompido se o flag
-        `_running` for setado para `False`.
-
-        Se ocorrer um erro durante a execução do auto-clicker, exibe o erro e
-        sai do loop.
-
-        Quando o loop for interrompido, restaura a cor do Container para azul
-        claro e sai do método.
-        """
+    def _auto_click_ON(self, page,velocidade):
         try:
             if not self._selected_window:
                 print("Erro: Nenhuma janela selecionada.")
@@ -60,14 +40,19 @@ class Auto_Clicker:
             print(f"Coordenadas do mouse: X = {x}, Y = {y}")
 
             # Define o intervalo entre os cliques (em segundos)
-            intervalo_entre_cliques = 0.5  # 0.5 segundo
+            velocidades = {
+                'Lento': 1.0 ,
+                'Normal': 0.3,
+                'Rápido': 0.1,
+            }
+            intervalo = velocidades.get(velocidade, 0.)
 
             self._running = True
             print("Auto-click ligado. Pressione 'Q' para parar o script.")
             while self._running:
                 click(x, y)  # Clique nas coordenadas
                 print(f"Clicado em X = {x}, Y = {y}")
-                time.sleep(intervalo_entre_cliques)  # Aguarda o intervalo
+                time.sleep(intervalo)  # Aguarda o intervalo
         except Exception as e:
             print(f"Erro durante o auto-click: {e}")
         finally:
@@ -87,7 +72,7 @@ class Auto_Clicker:
         self._running = False
         print("Auto-click desligado.")
 
-    def _listar_janelas(self, page):
+    def _listar_janelas(self, page, text_label = Text):
         try:
             print("Listando janelas...")
             # Lista todas as janelas abertas usando o backend 'uia'
@@ -102,9 +87,12 @@ class Auto_Clicker:
             self._dropdown_janelas.options = [
                 dropdown.Option(text=titulo) for titulo in titulos_janelas
             ]
+            text_label.value = "Janelas listadas com sucesso. "
+            text_label.update()
             page.update()
         except Exception as e:
             print(f"Erro ao listar janelas: {e}")
+            page.update()
 
     def _selecionar_janela(self, page):
         """
@@ -158,6 +146,19 @@ class Auto_Clicker:
         page.horizontal_alignment = "center"
         page.vertical_alignment = "center"
         page.bgcolor = "grey900"  # Fundo da página em cinza claro
+        
+        # Dropdown para listar a velocidade de clicagem
+        self._dropdown_velocidade = Dropdown(
+            label="Selecione a velocidade de click",
+            options=[
+                dropdown.Option(text="Lento"),
+                dropdown.Option(text="Normal"),
+                dropdown.Option(text="Rapido"),
+            ],
+            value="Normal",
+            width=400,  # Largura maior para o Dropdown
+            color= 'white',
+        )
 
         # Dropdown para listar as janelas
         self._dropdown_janelas = Dropdown(
@@ -169,6 +170,13 @@ class Auto_Clicker:
         )
 
         # Botões
+        Title_text = Text("Auto-Clicker", color="black", size=20, weight="bold")
+        bnt_ligar = FilledButton(text="Ligar", on_click=lambda e: self._iniciar_auto_click(page, self._dropdown_velocidade.value))
+        bnt_desligar = FilledButton(text="Desligar", on_click=lambda e: self._auto_click_OFF())
+        text_label = Text("Por favor, liste as janelas para seleciona-las.", color="black", size=18,weight="bold")
+        bnt_listar_janelas = FilledButton(text="Listar Janelas", on_click=lambda e: self._listar_janelas(page,text_label))
+        bnt_selecionar_janela = FilledButton(text="Selecionar Janela", on_click=lambda e: self._selecionar_janela(page))
+=======
         Title_text = Text(
             "Auto-Clicker", 
             color="black", 
@@ -204,12 +212,16 @@ class Auto_Clicker:
             border_radius=10,
             content=Column(
                 [
-                    Row(
+                    ResponsiveRow(
                         [Title_text],
                         alignment=MainAxisAlignment.CENTER,
                     ),
                     Row(
                         [self._dropdown_janelas],
+                        alignment=MainAxisAlignment.CENTER,
+                    ),
+                    Row(
+                        [self._dropdown_velocidade],
                         alignment=MainAxisAlignment.CENTER,
                     ),
                     Row(
@@ -222,6 +234,12 @@ class Auto_Clicker:
                         alignment=MainAxisAlignment.CENTER,
                         spacing=20,  # Espaçamento entre os botões
                     )
+                    ,
+                    
+                    Row(
+                        [text_label],
+                        alignment=MainAxisAlignment.CENTER,
+                    ),
                 ],
                 alignment=MainAxisAlignment.START,
                 horizontal_alignment=CrossAxisAlignment.CENTER,
@@ -232,23 +250,13 @@ class Auto_Clicker:
         page.add(self._container)
         page.update()
 
-    def _iniciar_auto_click(self, page):
-        """
-        Inicia o auto-clicker em uma thread separada.
-
-        Chama o método `_auto_click_ON` em uma thread separada, passando a
-        página como parâmetro. Isso permite que o auto-clicker seja executado
-        em paralelo com a thread principal do programa.
-
-        Também configura a tecla "Q" para desligar o auto-click, chamando o
-        método `_auto_click_OFF` quando a tecla for pressionada.
-        """
+    def _iniciar_auto_click(self, page, dropdown_velocidade):
         print("Iniciando auto-click...")
         # Inicia o auto-clicker em uma thread separada
-        Thread(target=self._auto_click_ON, args=(page,), daemon=True).start()
+        Thread(target=self._auto_click_ON, args=(page,dropdown_velocidade), daemon=True).start()
 
         # Configura a tecla "Q" para desligar o auto-click
-        add_hotkey("q", self._auto_click_OFF)
+        add_hotkey("z", self._auto_click_OFF)
 
     def _run(self):
         """
