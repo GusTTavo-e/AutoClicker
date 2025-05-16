@@ -7,6 +7,15 @@ from pywinauto import Desktop  # Biblioteca para interagir com janelas
 
 class Auto_Clicker:
     def __init__(self):
+        """
+        Inicializa o objeto Auto_Clicker.
+
+        Attributes:
+            _running (bool): Flag para controlar o loop do auto-clicker.
+            _container (Container): Referência ao Container para modificar sua cor.
+            _selected_window (WindowSpecification): Janela selecionada pelo usuário.
+            _dropdown_janelas (Dropdown): Referência ao Dropdown para listar janelas.
+        """
         self._running = False  # Flag para controlar o loop do auto-clicker
         self._container = None  # Referência ao Container para modificar sua cor
         self._selected_window = None  # Janela selecionada pelo usuário
@@ -52,7 +61,14 @@ class Auto_Clicker:
             self._container.bgcolor = "#FCA5A5"  # Vermelho pastel mais vibrante
             page.update()
 
-    def _auto_click_OFF(self):
+    def _auto_click_OFF(self):        
+        """
+        Desliga o auto-clicker.
+
+        Seta o flag `_running` para `False`, o que interrompe o loop do
+        auto-clicker. Mostra uma mensagem informando que o auto-click foi
+        desligado.
+        """
         self._running = False
         print("Auto-click desligado.")
 
@@ -79,6 +95,18 @@ class Auto_Clicker:
             page.update()
 
     def _selecionar_janela(self, page):
+        """
+        Seleciona a janela escolhida pelo usuário.
+
+        Verifica se alguma janela foi selecionada no Dropdown. Se sim, lista
+        todas as janelas abertas novamente para encontrar a janela correta. Se
+        encontrar, armazena a janela em `self._selected_window` e mostra uma
+        mensagem informando qual janela foi selecionada.
+
+        Raises:
+            Exception: Se houver algum erro durante o processo de seleção de
+                janela.
+        """
         try:
             if not self._dropdown_janelas.value:
                 print("Erro: Nenhuma janela selecionada.")
@@ -101,6 +129,16 @@ class Auto_Clicker:
             print(f"Erro ao selecionar janela: {e}")
 
     def _tela(self, page: Page):
+        """
+        Cria a tela do auto-clicker.
+
+        Inicializa o conteúdo da página com um título, um Dropdown para
+        selecionar a janela, e quatro botões: Listar Janelas, Selecionar Janela,
+        Ligar e Desligar. Cada botão executa uma ação específica.
+
+        Attributes:
+            page (Page): Página do Flet que contém a tela do auto-clicker.
+        """
         page.title = "Auto-Clicker"
         page.window.center()
         page.window.width = 480
@@ -128,7 +166,7 @@ class Auto_Clicker:
             options=[],  # Inicialmente vazio
             autofocus=True,
             width=400,  # Largura maior para o Dropdown
-            color= 'white',
+            bgcolor= 'white',
         )
 
         # Botões
@@ -138,6 +176,32 @@ class Auto_Clicker:
         text_label = Text("Por favor, liste as janelas para seleciona-las.", color="black", size=18,weight="bold")
         bnt_listar_janelas = FilledButton(text="Listar Janelas", on_click=lambda e: self._listar_janelas(page,text_label))
         bnt_selecionar_janela = FilledButton(text="Selecionar Janela", on_click=lambda e: self._selecionar_janela(page))
+=======
+        Title_text = Text(
+            "Auto-Clicker", 
+            color="black", 
+            size=20, 
+            weight="bold")
+        
+        bnt_ligar = FilledButton(
+            text="Ligar !", 
+            on_click=lambda e: self._iniciar_auto_click(page)
+            )
+        
+        bnt_desligar = FilledButton(
+            text="Desligar", 
+            on_click=lambda e: self._auto_click_OFF()
+            )
+        
+        bnt_listar_janelas = FilledButton(
+            text="Listar Janelas", 
+            on_click=lambda e: self._listar_janelas(page)
+            )
+        
+        bnt_selecionar_janela = FilledButton(
+            text="Selecionar Janela", 
+            on_click=lambda e: self._selecionar_janela(page)
+            )
 
         # Container principal
         self._container = Container(
@@ -195,4 +259,12 @@ class Auto_Clicker:
         add_hotkey("z", self._auto_click_OFF)
 
     def _run(self):
+        """
+        Executa a aplicação do auto-clicker.
+
+        Inicializa a aplicação Flet, passando a função `_tela` como alvo
+        para configurar a interface do usuário. Isso inicia a interface
+        gráfica do auto-clicker e aguarda a interação do usuário.
+        """
+
         app(target=self._tela)
