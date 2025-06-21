@@ -1,185 +1,247 @@
-from flet import Page, Text, Row, app, Column, Container, MainAxisAlignment, FilledButton, CrossAxisAlignment, Dropdown, dropdown,ResponsiveRow
+from flet import (
+    Page, Text, Row, app, Column, Container, MainAxisAlignment, 
+    FilledButton, CrossAxisAlignment, Dropdown, dropdown, ResponsiveRow,
+    animation, ButtonStyle, RoundedRectangleBorder, Divider, Icon, TextStyle
+)
 from pyautogui import position, click
 import time
 from threading import Thread
-from keyboard import add_hotkey # Biblioteca para detectar teclas pressionadas
-from pywinauto import Desktop  # Biblioteca para interagir com janelas
+from keyboard import add_hotkey
+from pywinauto import Desktop
 
 class Auto_Clicker:
     def __init__(self):
-        self._running = False  # Flag para controlar o loop do auto-clicker
-        self._container = None  # Referência ao Container para modificar sua cor
-        self._selected_window = None  # Janela selecionada pelo usuário
-        self._dropdown_janelas = None  # Referência ao Dropdown para listar janelas
+        self._running = False
+        self._container = None
+        self._selected_window = None
+        self._dropdown_janelas = None
+        self._clicks_count = 0
+        self._status_label = None
 
-    def _auto_click_ON(self, page,velocidade):
+    def _auto_click_ON(self, page, velocidade):
         try:
             if not self._selected_window:
-                print("Erro: Nenhuma janela selecionada.")
+                self._update_status(page, "❌ Nenhuma janela selecionada!", "#EF4444")
                 return
 
-            print(f"Janela selecionada: {self._selected_window.window_text()}")
-            self._selected_window.set_focus()  # Coloca a janela em foco
-            time.sleep(2)  # Dá tempo para a janela ganhar foco
+            self._update_status(page, "🟢 Executando...", "#10B981")
+            self._selected_window.set_focus()
+            time.sleep(1)
 
-            # Muda a cor do Container para verde suave
-            self._container.bgcolor = "#A7F3D0"  # Verde pastel mai vibrante
-            page.update()
-
-            # Obtém as coordenadas iniciais do mouse
-            x, y = position()
-            print(f"Coordenadas do mouse: X = {x}, Y = {y}")
-
-            # Define o intervalo entre os cliques (em segundos)
             velocidades = {
-                'Lento': 1.0 ,
+                'Lento': 1.0,
                 'Normal': 0.3,
                 'Rápido': 0.1,
             }
-            intervalo = velocidades.get(velocidade, 0.)
+            intervalo = velocidades.get(velocidade, 0.3)
 
+            x, y = position()
             self._running = True
-            print("Auto-click ligado. Pressione 'Q' para parar o script.")
+            self._clicks_count = 0
+            
             while self._running:
-                click(x, y)  # Clique nas coordenadas
-                print(f"Clicado em X = {x}, Y = {y}")
-                time.sleep(intervalo)  # Aguarda o intervalo
+                click(x, y)
+                self._clicks_count += 1
+                self._update_click_counter(page)
+                time.sleep(intervalo)
+                
         except Exception as e:
-            print(f"Erro durante o auto-click: {e}")
+            self._update_status(page, f"❌ Erro: {str(e)}", "#EF4444")
         finally:
-            print("Auto-click desligado.")
-            # Restaura a cor do Container para azul claro
-            self._container.bgcolor = "#FCA5A5"  # Vermelho pastel mais vibrante
+            self._auto_click_OFF(page)
+
+    def _auto_click_OFF(self, page=None):
+        self._running = False
+        if page:
+            self._update_status(page, "⏹ Pronto para executar", "#3B82F6")
+            self._update_click_counter(page, reset=True)
+
+    def _update_status(self, page, message, color):
+        if self._status_label:
+            self._status_label.value = message
+            self._status_label.color = color
             page.update()
 
-    def _auto_click_OFF(self):
-        self._running = False
-        print("Auto-click desligado.")
+    def _update_click_counter(self, page, reset=False):
+        if hasattr(self, '_counter_label'):
+            if reset:
+                self._counter_label.value = "Cliques: 0"
+            else:
+                self._counter_label.value = f"Cliques: {self._clicks_count}"
+            page.update()
 
-    def _listar_janelas(self, page, text_label = Text):
+    def _listar_janelas(self, page, text_label):
         try:
-            print("Listando janelas...")
-            # Lista todas as janelas abertas usando o backend 'uia'
             desktop = Desktop(backend="uia")
             janelas = desktop.windows()
-
-            # Cria uma lista de títulos de janelas
             titulos_janelas = [janela.window_text() for janela in janelas if janela.window_text()]
-            print(f"Janelas encontradas: {titulos_janelas}")
-
-            # Atualiza o Dropdown com as janelas encontradas
+            
             self._dropdown_janelas.options = [
                 dropdown.Option(text=titulo) for titulo in titulos_janelas
             ]
-            text_label.value = "Janelas listadas com sucesso. "
-            text_label.update()
+            
+            text_label.value = "✅ Janelas listadas com sucesso"
+            text_label.color = "#10B981"
             page.update()
+            
         except Exception as e:
-            print(f"Erro ao listar janelas: {e}")
+            text_label.value = f"❌ Erro: {str(e)}"
+            text_label.color = "#EF4444"
             page.update()
 
-    def _selecionar_janela(self, page):
+    def _selecionar_janela(self, page, text_label):
+        if not self._dropdown_janelas.value:
+            text_label.value = "❌ Selecione uma janela primeiro!"
+            text_label.color = "#EF4444"
+            page.update()
+            return
+
         try:
-            if not self._dropdown_janelas.value:
-                print("Erro: Nenhuma janela selecionada.")
-                return
-
-            # Obtém o título da janela selecionada
-            titulo_janela = self._dropdown_janelas.value
-
-            # Lista todas as janelas abertas novamente para encontrar a janela correta
             desktop = Desktop(backend="uia")
-            janelas = desktop.windows()
-
-            # Procura a janela com o título selecionado
-            for janela in janelas:
-                if janela.window_text() == titulo_janela:
+            for janela in desktop.windows():
+                if janela.window_text() == self._dropdown_janelas.value:
                     self._selected_window = janela
-                    print(f"Janela selecionada: {self._selected_window.window_text()}")
+                    text_label.value = f"✅ {janela.window_text()[:30]}..." if len(janela.window_text()) > 30 else f"✅ {janela.window_text()}"
+                    text_label.color = "#10B981"
+                    page.update()
                     break
+                    
         except Exception as e:
-            print(f"Erro ao selecionar janela: {e}")
+            text_label.value = f"❌ Erro: {str(e)}"
+            text_label.color = "#EF4444"
+            page.update()
 
     def _tela(self, page: Page):
-        page.title = "Auto-Clicker"
+        page.title = "Auto-Clicker Pro"
         page.window.center()
-        page.window.width = 480
-        page.window.height = 480  # Aumentei a altura para acomodar a lista de janelas
+        page.window.width = 500
+        page.window.height = 600
+        page.window_resizable = False
         page.horizontal_alignment = "center"
         page.vertical_alignment = "center"
-        page.bgcolor = "grey900"  # Fundo da página em cinza claro
-        
-        # Dropdown para listar a velocidade de clicagem
+        page.bgcolor = "#1E293B"
+        page.padding = 20
+
+        # Componentes da UI
+        Title_text = Text("Auto-Clicker Pro", color="#FFFFFF", size=24, weight="bold")
+        subtitle = Text("Automatize seus cliques com facilidade", color="#94A3B8", size=14)
+
         self._dropdown_velocidade = Dropdown(
-            label="Selecione a velocidade de click",
+            label="Velocidade de clique",
             options=[
-                dropdown.Option(text="Lento"),
-                dropdown.Option(text="Normal"),
-                dropdown.Option(text="Rapido"),
+                dropdown.Option("Lento"),
+                dropdown.Option("Normal"),
+                dropdown.Option("Rápido"),
             ],
             value="Normal",
-            width=400,  # Largura maior para o Dropdown
-            color= 'white',
+            width=450,
+            color="white",
+            bgcolor="#475569",
+            border_color="#64748B"
         )
 
-        # Dropdown para listar as janelas
         self._dropdown_janelas = Dropdown(
-            label="Selecione uma janela",
-            options=[],  # Inicialmente vazio
+            label="Janela para focar",
+            options=[],
+            width=450,
+            color="white",
+            bgcolor="#475569",
+            border_color="#64748B",
             autofocus=True,
-            width=400,  # Largura maior para o Dropdown
-            color= 'white',
+            label_style=TextStyle(color="white")  # Label em branco
         )
 
-        # Botões
-        Title_text = Text("Auto-Clicker", color="black", size=20, weight="bold")
-        bnt_ligar = FilledButton(text="Ligar", on_click=lambda e: self._iniciar_auto_click(page, self._dropdown_velocidade.value))
-        bnt_desligar = FilledButton(text="Desligar", on_click=lambda e: self._auto_click_OFF())
-        text_label = Text("Por favor, liste as janelas para seleciona-las.", color="black", size=18,weight="bold")
-        bnt_listar_janelas = FilledButton(text="Listar Janelas", on_click=lambda e: self._listar_janelas(page,text_label))
-        bnt_selecionar_janela = FilledButton(text="Selecionar Janela", on_click=lambda e: self._selecionar_janela(page))
+        # Botões com ícones e estilo
+        bnt_ligar = FilledButton(
+            text="▶ Iniciar",
+            icon="play_arrow",
+            style=ButtonStyle(
+                bgcolor={"": "#10B981", "hovered": "#059669"},
+                shape=RoundedRectangleBorder(radius=8),
+                padding=15
+            ),
+            on_click=lambda e: self._iniciar_auto_click(page, self._dropdown_velocidade.value)
+        )
+
+        bnt_desligar = FilledButton(
+            text="⏹ Parar",
+            icon="stop",
+            style=ButtonStyle(
+                bgcolor={"": "#EF4444", "hovered": "#DC2626"},
+                shape=RoundedRectangleBorder(radius=8),
+                padding=15
+            ),
+            on_click=lambda e: self._auto_click_OFF(page)
+        )
+
+        bnt_listar_janelas = FilledButton(
+            text="🔍 Listar Janelas",
+            style=ButtonStyle(
+                bgcolor={"": "#7C3AED", "hovered": "#6D28D9"},
+                shape=RoundedRectangleBorder(radius=8),
+                padding=15
+            ),
+            on_click=lambda e: self._listar_janelas(page, text_label)
+        )
+
+        bnt_selecionar_janela = FilledButton(
+            text="✅ Selecionar",
+            style=ButtonStyle(
+                bgcolor={"": "#3B82F6", "hovered": "#2563EB"},
+                shape=RoundedRectangleBorder(radius=8),
+                padding=15
+            ),
+            on_click=lambda e: self._selecionar_janela(page, text_label)
+        )
+
+        text_label = Text("Selecione uma janela para começar", color="#E2E8F0", size=14)
+        self._status_label = Text("⏳ Pronto para executar", color="#3B82F6", size=14)
+        self._counter_label = Text("Cliques: 0", color="#94A3B8", size=12)
+        shortcut_hint = Text("Pressione Z para parar", color="#64748B", size=11)
 
         # Container principal
         self._container = Container(
-            width=440,
-            height=400,  # Aumentei a altura para acomodar a lista de janelas
-            bgcolor="#FCA5A5",  # Azul pastel
-            padding=25,
-            border_radius=10,
+            width=460,
+            height=520,
+            bgcolor="#334155",
+            padding=20,
+            border_radius=12,
+            animate=animation.Animation(300, "easeInOut"),
             content=Column(
                 [
+                    Column([Title_text, subtitle], alignment=MainAxisAlignment.CENTER),
+                    Divider(height=20, color="transparent"),
+                    self._dropdown_janelas,
+                    Divider(height=10, color="transparent"),
+                    self._dropdown_velocidade,
+                    Divider(height=20, color="transparent"),
                     ResponsiveRow(
-                        [Title_text],
-                        alignment=MainAxisAlignment.CENTER,
-                    ),
-                    Row(
-                        [self._dropdown_janelas],
-                        alignment=MainAxisAlignment.CENTER,
-                    ),
-                    Row(
-                        [self._dropdown_velocidade],
-                        alignment=MainAxisAlignment.CENTER,
-                    ),
-                    Row(
                         [bnt_listar_janelas, bnt_selecionar_janela],
-                        alignment=MainAxisAlignment.CENTER,
-                        spacing=20,  # Espaçamento entre os botões
+                        spacing=10,
+                        alignment=MainAxisAlignment.CENTER
                     ),
-                    Row(
+                    Divider(height=20, color="transparent"),
+                    ResponsiveRow(
                         [bnt_ligar, bnt_desligar],
-                        alignment=MainAxisAlignment.CENTER,
-                        spacing=20,  # Espaçamento entre os botões
-                    )
-                    ,
-                    
-                    Row(
-                        [text_label],
-                        alignment=MainAxisAlignment.CENTER,
+                        spacing=10,
+                        alignment=MainAxisAlignment.CENTER
                     ),
+                    Divider(height=20, color="transparent"),
+                    Column(
+                        [
+                            text_label,
+                            Divider(height=10, color="transparent"),
+                            self._status_label,
+                            Divider(height=5, color="transparent"),
+                            self._counter_label,
+                            Divider(height=5, color="transparent"),
+                            shortcut_hint
+                        ],
+                        horizontal_alignment=CrossAxisAlignment.CENTER
+                    )
                 ],
-                alignment=MainAxisAlignment.START,
+                spacing=0,
                 horizontal_alignment=CrossAxisAlignment.CENTER,
-                spacing=20,  # Espaçamento entre as linhas
             )
         )
 
@@ -187,12 +249,8 @@ class Auto_Clicker:
         page.update()
 
     def _iniciar_auto_click(self, page, dropdown_velocidade):
-        print("Iniciando auto-click...")
-        # Inicia o auto-clicker em uma thread separada
-        Thread(target=self._auto_click_ON, args=(page,dropdown_velocidade), daemon=True).start()
-
-        # Configura a tecla "Q" para desligar o auto-click
-        add_hotkey("z", self._auto_click_OFF)
+        Thread(target=self._auto_click_ON, args=(page, dropdown_velocidade), daemon=True).start()
+        add_hotkey("z", lambda: self._auto_click_OFF(page))
 
     def _run(self):
         app(target=self._tela)
