@@ -1,7 +1,7 @@
 from flet import (
-    Page, Text, Row, app, Column, Container, MainAxisAlignment, 
+    Page, Text, Row, app, Column, Container, MainAxisAlignment,
     FilledButton, CrossAxisAlignment, Dropdown, dropdown, ResponsiveRow,
-    animation, ButtonStyle, RoundedRectangleBorder, Divider, Icon, TextStyle
+    Animation, ButtonStyle, RoundedRectangleBorder, Divider, Icon, TextStyle,Image
 )
 from pyautogui import position, click
 import time
@@ -153,7 +153,7 @@ class Auto_Clicker:
 
         # Botões com ícones e estilo
         bnt_ligar = FilledButton(
-            text="▶ Iniciar",
+            '▶ Iniciar',
             icon="play_arrow",
             style=ButtonStyle(
                 bgcolor={"": "#10B981", "hovered": "#059669"},
@@ -164,7 +164,7 @@ class Auto_Clicker:
         )
 
         bnt_desligar = FilledButton(
-            text="⏹ Parar",
+            "⏹ Parar",
             icon="stop",
             style=ButtonStyle(
                 bgcolor={"": "#EF4444", "hovered": "#DC2626"},
@@ -175,7 +175,7 @@ class Auto_Clicker:
         )
 
         bnt_listar_janelas = FilledButton(
-            text="🔍 Listar Janelas",
+            "🔍 Listar Janelas",
             style=ButtonStyle(
                 bgcolor={"": "#7C3AED", "hovered": "#6D28D9"},
                 shape=RoundedRectangleBorder(radius=8),
@@ -185,7 +185,7 @@ class Auto_Clicker:
         )
 
         bnt_selecionar_janela = FilledButton(
-            text="✅ Selecionar",
+            "✅ Selecionar",
             style=ButtonStyle(
                 bgcolor={"": "#3B82F6", "hovered": "#2563EB"},
                 shape=RoundedRectangleBorder(radius=8),
@@ -206,10 +206,29 @@ class Auto_Clicker:
             bgcolor="#334155",
             padding=20,
             border_radius=12,
-            animate=animation.Animation(300, "easeInOut"),
+            animate=Animation(300, "easeInOut"),
             content=Column(
                 [
-                    Column([Title_text, subtitle], alignment=MainAxisAlignment.CENTER),
+                    Column(
+                        [
+                            Row(
+                                [
+                                    Image(
+                                        src="mouse-click-icon.png",
+                                        width=40,
+                                        height=40,
+                                        fit="contain"
+                                    ),
+                                    Title_text
+                                ],
+                                alignment=MainAxisAlignment.CENTER,
+                                vertical_alignment=CrossAxisAlignment.CENTER
+                            ),
+                            subtitle
+                        ],
+                        alignment=MainAxisAlignment.CENTER
+                    ),
+
                     Divider(height=20, color="transparent"),
                     self._dropdown_janelas,
                     Divider(height=10, color="transparent"),
@@ -250,7 +269,7 @@ class Auto_Clicker:
 
     def _iniciar_auto_click(self, page, dropdown_velocidade):
         Thread(target=self._auto_click_ON, args=(page, dropdown_velocidade), daemon=True).start()
-        add_hotkey("z", lambda: self._auto_click_OFF(page))
+        add_hotkey("q", lambda: self._auto_click_OFF(page))
 
     def _run(self):
         app(target=self._tela)
