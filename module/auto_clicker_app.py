@@ -1,13 +1,14 @@
 from flet import (
     Page, Text, Row, app, Column, Container, MainAxisAlignment,
     FilledButton, CrossAxisAlignment, Dropdown, dropdown, ResponsiveRow,
-    Animation, ButtonStyle, RoundedRectangleBorder, Divider, Icon, TextStyle,Image
+    Animation, ButtonStyle, RoundedRectangleBorder, Divider, TextStyle, Image
 )
 from pyautogui import position, click
 import time
 from threading import Thread
 from keyboard import add_hotkey
 from pywinauto import Desktop
+
 
 class Auto_Clicker:
     def __init__(self):
@@ -32,6 +33,7 @@ class Auto_Clicker:
                 'Lento': 1.0,
                 'Normal': 0.3,
                 'Rápido': 0.1,
+                'Ultra': 0.01,
             }
             intervalo = velocidades.get(velocidade, 0.3)
 
@@ -113,10 +115,10 @@ class Auto_Clicker:
 
     def _tela(self, page: Page):
         page.title = "Auto-Clicker Pro"
-        page.window.center()
         page.window.width = 500
         page.window.height = 600
-        page.window_resizable = False
+        page.window.center()
+        page.window.resizable = False
         page.horizontal_alignment = "center"
         page.vertical_alignment = "center"
         page.bgcolor = "#1E293B"
@@ -132,6 +134,7 @@ class Auto_Clicker:
                 dropdown.Option("Lento"),
                 dropdown.Option("Normal"),
                 dropdown.Option("Rápido"),
+                dropdown.Option("Ultra"),
             ],
             value="Normal",
             width=450,

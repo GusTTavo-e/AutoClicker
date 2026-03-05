@@ -1,6 +1,6 @@
 from flet import app, Page
-from module.auto_clicker_app import Auto_Clicker
-from module.welcome_screen import WelcomeScreen  # ← corrigido
+from auto_clicker import Auto_Clicker
+from module.welcome_screen import WelcomeScreen
 
 class AppController:
     def __init__(self):
