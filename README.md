@@ -2,7 +2,7 @@
 
 Descrição do projeto.
 --------------------------------------------------------------------------------------------------------------------------
-Sofware de Auto Click feito na intenção de estudo e para fins de uso proprio que decidi tambem compartilhar.
+Sofware de Auto Click feito na intenção de estudo e para fins de uso proprio que decidi tambem compartilhar. Criei uma tela de como usar o sofware para usuarios nao ficarem perdidos na hora de usar o programa
 
 Ferramentas e bibliotecas.
 --------------------------------------------------------------------------------------------------------------------------
